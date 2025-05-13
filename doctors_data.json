@@ -1,0 +1,132 @@
+{
+  "doctors_specialties": [
+    {
+      "doctor": "Dr. Robert Krinsky, MD",
+      "specialty": "Primary Care, Nephrology (Kidney)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Donzella Dixon, MD",
+      "specialty": "Primary Care",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Marina Weinstein, PA, PA-C",
+      "specialty": "Primary Care",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Nathalie Monfiston, FNP",
+      "specialty": "Primary Care",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Charles Francis, DO",
+      "specialty": "Primary Care, Family Practice",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Yelena Bataykin, MD",
+      "specialty": "Pediatrics",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. David Stewart, DPM",
+      "specialty": "Podiatry (feet)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Patrick Sciortino, MD",
+      "specialty": "Ophthalmology (Eye)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Cary Pollack, MD",
+      "specialty": "Cardiology (Heart)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Aaron Grotas, MD",
+      "specialty": "Urology",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Eric Berkowits, MD",
+      "specialty": "Vascular (Veins)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Steven Weissman, MD",
+      "specialty": "Dermatology (Skin)",
+      "insurances": [
+        "Fidelis",
+        "Metro Plus"
+      ]
+    },
+    {
+      "doctor": "Gail Weissman, PA",
+      "specialty": "Dermatology (Skin)",
+      "insurances": [
+        "Fidelis",
+        "Metro Plus"
+      ]
+    },
+    {
+      "doctor": "Rachel Weissman, PA",
+      "specialty": "Dermatology (Skin)",
+      "insurances": [
+        "Fidelis",
+        "Metro Plus"
+      ]
+    },
+    {
+      "doctor": "Debranaye Rose, MSN",
+      "specialty": "Dermatology (Skin)",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    },
+    {
+      "doctor": "Dr. Ian Wall, DO",
+      "specialty": "Gastroenterology",
+      "insurances": [
+        "Fidelis",
+        "Healthfirst"
+      ]
+    }
+  ]
+}
