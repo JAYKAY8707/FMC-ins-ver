@@ -1365,51 +1365,60 @@ def specialty(specialty):
 
 @app.route('/standalone_verify')
 def standalone_verify():
+    import json
+
+    with open('doctors_data.json', 'r') as f:
+        data = json.load(f)
+
     insurance_query = request.args.get('insurance_query')
     doctor_query = request.args.get('doctor_query')
     specialty_query = request.args.get('specialty_query')
 
-    doctors = [d.name for d in Doctor.query.all()]
-    insurances = [i.name for i in Insurance.query.all()]
-    specialties = [s.name for s in Specialty.query.all()]
+    # Get unique doctors, specialties, and insurances from JSON
+    doctors = list(set(d['doctor'] for d in data['doctors_specialties']))
+    specialties = [
+        "Primary Care", "Dermatology (Skin)", "Nephrology (Kidney)",
+        "Pediatrics", "Ophthalmology (Eye)", "Podiatry (feet)",
+        "Vascular (Veins)", "Cardiology (Heart)", "Gastroenterology",
+        "Family Practice", "Urology"
+    ]
+    # Extract unique insurances from all doctors
+    insurances = list(set(
+        ins for d in data['doctors_specialties'] 
+        for ins in d.get('insurances', [])
+    ))
 
     matching_doctors = []
-    matching_insurance = []
 
-    def get_doctor_details(doctor, search_type='all'):
-        specialties = [ds.specialty.name for ds in doctor.specialties]
-        insurances = [di.insurance.name for di in doctor.insurances] if search_type != 'insurance' else []
-        return {
-            'name': doctor.name,
-            'specialties': ', '.join(specialties) if specialties else 'No specialties listed',
-            'insurances': ', '.join(insurances) if insurances else 'No insurances listed'
-        }
-
-    def get_doctor_details(doctor, search_type='all'):
-        specialties = [ds.specialty.name for ds in doctor.specialties]
-        insurances = [di.insurance.name for di in doctor.insurances] if search_type != 'insurance' else []
-        return {
-            'name': doctor.name,
-            'specialties': ', '.join(specialties) if specialties else 'No specialties listed',
-            'insurances': ', '.join(insurances) if insurances else 'No insurances listed'
-        }
-
+    # Handle insurance query
     if insurance_query:
-        insurance = Insurance.query.filter_by(name=insurance_query).first()
-        if insurance:
-            for doctor_rel in insurance.doctors:
-                matching_doctors.append(get_doctor_details(doctor_rel.doctor, search_type='insurance'))
+        for entry in data['doctors_specialties']:
+            if insurance_query in entry.get('insurances', []):
+                matching_doctors.append({
+                    'name': entry['doctor'],
+                    'specialties': entry['specialty'],
+                    'insurances': ', '.join(entry.get('insurances', []))
+                })
 
-    if doctor_query:
-        doctor = Doctor.query.filter_by(name=doctor_query).first()
-        if doctor:
-            matching_doctors = [get_doctor_details(doctor, search_type='doctor')]
+    # Handle doctor query
+    elif doctor_query:
+        for entry in data['doctors_specialties']:
+            if entry['doctor'] == doctor_query:
+                matching_doctors.append({
+                    'name': entry['doctor'],
+                    'specialties': entry['specialty'],
+                    'insurances': ', '.join(entry.get('insurances', []))
+                })
 
-    if specialty_query:
-        specialty = Specialty.query.filter_by(name=specialty_query).first()
-        if specialty:
-            for doctor_specialty in specialty.doctors:
-                matching_doctors.append(get_doctor_details(doctor_specialty.doctor, search_type='specialty'))
+    # Handle specialty query
+    elif specialty_query:
+        for entry in data['doctors_specialties']:
+            if specialty_query in entry['specialty'].split(', '):
+                matching_doctors.append({
+                    'name': entry['doctor'],
+                    'specialties': entry['specialty'],
+                    'insurances': ', '.join(entry.get('insurances', []))
+                })
 
     return render_template_string("""
 <!doctype html>
