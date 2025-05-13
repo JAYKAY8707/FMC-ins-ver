@@ -37,8 +37,7 @@ class Specialty(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
 
 class DoctorSpecialty(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=False)
+    id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=False)
     specialty_id = db.Column(db.Integer, db.ForeignKey('specialty.id'), nullable=False)
     doctor = db.relationship('Doctor', backref=db.backref('specialties', lazy=True))
     specialty = db.relationship('Specialty', backref=db.backref('doctors', lazy=True))
@@ -897,10 +896,19 @@ query_template = """
         }
       </style>
 
-      <div id="doctorSearch" class="search-box" style="display: none<new_generation>;">
+      <div id="doctorSearch" class="search-box" style="display: none;">
           <div class="doctor-grid">
-            {% for doc in doctors %}
-              <button class="doctor-button" onclick="showDoctorResults('{{ doc }}')">{{ doc }}</button>
+            {% for doc in doctors %}              {% set doc_specialties = [] %}
+              {% for entry in data['doctors_specialties'] %}
+                {% if entry['doctor'] == doc %}
+                  {% for spec in specialties %}
+                    {% if spec in entry['specialty'].split(', ') %}
+                      {% set _ = doc_specialties.append(loop.index) %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+              <button class="specialty-button doctor-button {% if doc_specialties|length == 1 %}doctor-{{ doc_specialties[0] }}{% elif doc_specialties|length == 2 %}doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }}{% endif %}" onclick="showDoctorResults('{{ doc }}')">{{ doc }}</button>
             {% endfor %}
           </div>
       </div>
@@ -914,7 +922,6 @@ query_template = """
           width: 100%;
         }
         .doctor-button {
-          background: #2563eb;
           color: white;
           padding: 0.75rem 1rem;
           border: none;
@@ -928,10 +935,39 @@ query_template = """
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .doctor-button:hover {
-          background: #1d4ed8;
-          transform: scale(1.05);
-        }
+        {% for doc in doctors %}
+          {% set doc_specialties = [] %}
+          {% for entry in data['doctors_specialties'] %}
+            {% if entry['doctor'] == doc %}
+              {% for spec in entry['specialty'].split(', ') %}
+                {% set _ = doc_specialties.append(loop.index) %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+          {% if doc_specialties|length == 1 %}
+          .doctor-{{ doc_specialties[0] }} {
+            background: hsl({{ (doc_specialties[0] * 37) % 360 }}, 70%, 45%);
+          }
+          .doctor-{{ doc_specialties[0] }}:hover {
+            background: hsl({{ (doc_specialties[0] * 37) % 360 }}, 80%, 40%);
+            transform: scale(1.05);
+          }
+          {% elif doc_specialties|length == 2 %}
+          .doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }} {
+            background: linear-gradient(90deg, 
+              hsl({{ (doc_specialties[0] * 37) % 360 }}, 70%, 45%) 0%,
+              hsl({{ (doc_specialties[1] * 37) % 360 }}, 70%, 45%) 100%
+            );
+          }
+          .doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }}:hover {
+            background: linear-gradient(90deg, 
+              hsl({{ (doc_specialties[0] * 37) % 360 }}, 80%, 40%) 0%,
+              hsl({{ (doc_specialties[1] * 37) % 360 }}, 80%, 40%) 100%
+            );
+            transform: scale(1.05);
+          }
+          {% endif %}
+        {% endfor %}
       </style>
     </div>
 
@@ -1420,7 +1456,8 @@ def standalone_verify():
                     'insurances': ', '.join(entry.get('insurances', []))
                 })
 
-    return render_template_string("""
+    return render_template_string(
+    """
 <!doctype html>
 <head>
   <title>Insurance Verification - First MedCare</title>
@@ -1567,7 +1604,17 @@ def standalone_verify():
       <div id="doctorSearch" class="search-box" style="display: none;">
           <div class="specialty-grid">
             {% for doc in doctors %}
-              <button class="specialty-button doctor-button" onclick="showDoctorResults('{{ doc }}')">Dr. {{ doc }}</button>
+              {% set doc_specialties = [] %}
+              {% for entry in data['doctors_specialties'] %}
+                {% if entry['doctor'] == doc %}
+                  {% for spec in specialties %}
+                    {% if spec in entry['specialty'].split(', ') %}
+                      {% set _ = doc_specialties.append(loop.index) %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+              {% endfor %}
+              <button class="specialty-button doctor-button {% if doc_specialties|length == 1 %}doctor-{{ doc_specialties[0] }}{% elif doc_specialties|length == 2 %}doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }}{% endif %}" onclick="showDoctorResults('{{ doc }}')">{{ doc }}</button>
             {% endfor %}
           </div>
       </div>
@@ -1582,93 +1629,120 @@ def standalone_verify():
 
       <style>
         .doctor-button {
-          background: #2563eb;
           font-size: 0.9rem;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .doctor-button:hover {
-          background: #1d4ed8;
-        }
-        {% for spec in specialties %}
-        .specialty-button-{{ loop.index }} {
-          background: hsl({{ (loop.index * 37) % 360 }}, 70%, 45%);
-        }
-        .specialty-button-{{ loop.index }}:hover {
-          background: hsl({{ (loop.index * 37) % 360 }}, 80%, 40%);
-        }
-        {% endfor %}
-      </style>
+        {% for doc in doctors %}
+          {% set doc_specialties = [] %}
+          {% for entry in data['doctors_specialties'] %}
+            {% if entry['doctor'] == doc %}
+              {% for spec in entry['specialty'].split(', ') %}
+                {% set _ = doc_specialties.append(loop.index) %}
+              {% endfor %}
+                {% endif %}
+                {% endfor %}
+                {% if doc_specialties|length == 1 %}
+                .doctor-{{ doc_specialties[0] }} {
+                    background: hsl({{ (doc_specialties[0] * 37) % 360 }}, 70%, 45%);
+                }
+                .doctor-{{ doc_specialties[0] }}:hover {
+                    background: hsl({{ (doc_specialties[0] * 37) % 360 }}, 80%, 40%);
+                }
+                {% elif doc_specialties|length == 2 %}
+                .doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }} {
+                    background: linear-gradient(90deg, 
+                    hsl({{ (doc_specialties[0] * 37) % 360 }}, 70%, 45%) 0%,
+                    hsl({{ (doc_specialties[1] * 37) % 360 }}, 70%, 45%) 100%
+                    );
+                }
+                .doctor-{{ doc_specialties[0] }}-{{ doc_specialties[1] }}:hover {
+                    background: linear-gradient(90deg, 
+                    hsl({{ (doc_specialties[0] * 37) % 360 }}, 80%, 40%) 0%,
+                    hsl({{ (doc_specialties[1] * 37) % 360 }}, 80%, 40%) 100%
+                    );
+                }
+                {% endif %}
+                {% endfor %}
+                {% for spec in specialties %}
+                .specialty-button-{{ loop.index }} {
+                    background: hsl({{ (loop.index * 37) % 360 }}, 70%, 45%);
+                }
+                .specialty-button-{{ loop.index }}:hover {
+                    background: hsl({{ (loop.index * 37) % 360 }}, 80%, 40%);
+                }
+                {% endfor %}
+            </style>
+        </div>
+
+        {% if insurance_query or doctor_query or specialty_query %}
+        <div class="results">
+            <h3>Search Results:</h3>
+            <ul>
+                {% for doc in matching_doctors %}
+                <li class="doctor-result">
+                    <h4>{{ doc.name }}</h4>
+                    <p><strong>Specialties:</strong> {{ doc.specialties }}</p>
+                    {% if doc.insurances and not insurance_query %}
+                    <p><strong>Accepted Insurances:</strong> {{ doc.insurances }}</p>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <style>
+            .doctor-result {
+                background: white;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            .doctor-result h4 {
+                margin: 0 0 0.5rem 0;
+                color: #1e293b;
+            }
+            .doctor-result p {
+                margin: 0.25rem 0;
+                color: #4b5563;
+            }
+        </style>
+        {% endif %}
     </div>
 
-    {% if insurance_query or doctor_query or specialty_query %}
-      <div class="results">
-        <h3>Search Results:</h3>
-        <ul>
-          {% for doc in matching_doctors %}
-            <li class="doctor-result">
-              <h4>{{ doc.name }}</h4>
-              <p><strong>Specialties:</strong> {{ doc.specialties }}</p>
-              {% if doc.insurances and not insurance_query %}
-              <p><strong>Accepted Insurances:</strong> {{ doc.insurances }}</p>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-
-      <style>
-        .doctor-result {
-          background: white;
-          padding: 1rem;
-          margin-bottom: 1rem;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    <script>
+        function showSearch(type) {
+            document.querySelectorAll('.search-box').forEach(box => box.style.display = 'none');
+            document.getElementById(type + 'Search').style.display = 'block';
         }
-        .doctor-result h4 {
-          margin: 0 0 0.5rem 0;
-          color: #1e293b;
+
+        function filterItems(type) {
+            var input = document.querySelector('#' + type + 'Search input');
+            var filter = input.value.toUpperCase();
+            var dropdown = document.querySelector('#' + type + 'Search .dropdown-content');
+            var links = dropdown.getElementsByTagName("a");
+
+            for (var i = 0; i < links.length; i++) {
+                var txtValue = links[i].textContent || links[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    links[i].style.display = "";
+                } else {
+                    links[i].style.display = "none";
+                }
+            }
+            dropdown.style.display = filter ? "block" : "none";
         }
-        .doctor-result p {
-          margin: 0.25rem 0;
-          color: #4b5563;
+
+        function showResults(specialty) {
+            window.location.href = `/standalone_verify?specialty_query=${encodeURIComponent(specialty)}`;
         }
-      </style>
-    {% endif %}
-  </div>
 
-  <script>
-    function showSearch(type) {
-      document.querySelectorAll('.search-box').forEach(box => box.style.display = 'none');
-      document.getElementById(type + 'Search').style.display = 'block';
-    }
-
-    function filterItems(type) {
-      var input = document.querySelector('#' + type + 'Search input');
-      var filter = input.value.toUpperCase();
-      var dropdown = document.querySelector('#' + type + 'Search .dropdown-content');
-      var links = dropdown.getElementsByTagName("a");
-
-      for (var i = 0; i < links.length; i++) {
-        var txtValue = links[i].textContent || links[i].innerText;
-        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-          links[i].style.display = "";
-        } else {
-          links[i].style.display = "none";
+        function showDoctorResults(doctor) {
+            window.location.href = `/standalone_verify?doctor_query=${encodeURIComponent(doctor)}`;
         }
-      }
-      dropdown.style.display = filter ? "block" : "none";
-    }
-
-    function showResults(specialty) {
-      window.location.href = `/standalone_verify?specialty_query=${encodeURIComponent(specialty)}`;
-    }
-
-    function showDoctorResults(doctor) {
-      window.location.href = `/standalone_verify?doctor_query=${encodeURIComponent(doctor)}`;
-    }
-  </script>
+    </script>
 </body>
     """,
     doctors=doctors,
@@ -1678,7 +1752,7 @@ def standalone_verify():
     doctor_query=doctor_query,
     specialty_query=specialty_query,
     matching_doctors=matching_doctors,
-    matching_insurance=matching_insurance)
+    data=data)
 
 @app.route('/query_page')
 def query_page():
@@ -1744,7 +1818,8 @@ def query_page():
                                insurance_query=insurance_query,
                                doctor_query=doctor_query,
                                specialty_query=specialty_query,
-                               matching_doctors=matching_doctors)
+                               matching_doctors=matching_doctors,
+                               data=data)
 
 # Initialize database
 with app.app_context():
